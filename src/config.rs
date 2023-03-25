@@ -29,12 +29,9 @@ impl CommacheConfigBuilder {
 /// Gets app config from config files and the environment
 pub fn get() -> CommacheConfig {
     let config = Config::builder()
-        .add_source(
-            config::Environment::with_prefix("COMMACHE")
-                .try_parsing(true)
-                .separator("_")
-                .list_separator(" "),
-        )
+        .add_source(config::Environment::with_prefix(
+            &std::env!("CARGO_PKG_NAME").to_uppercase(),
+        ))
         .build()
         .unwrap();
 
