@@ -1,5 +1,6 @@
 //! Commache!
 
+pub mod cache;
 pub mod config;
 
 #[cfg(test)]
