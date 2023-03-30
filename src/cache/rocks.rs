@@ -16,17 +16,18 @@ impl RocksDbCache<SingleThreaded> {
     }
 }
 
-impl<T> Cache<&[u8]> for RocksDbCache<T>
+impl<K, T> Cache<K> for RocksDbCache<T>
 where
+    K: AsRef<[u8]>,
     T: ThreadMode,
 {
-    fn get(&self, key: &[u8]) -> Option<String> {
+    fn get(&self, key: K) -> Option<String> {
         self.db
             .get(key)
             .unwrap_or(None)
             .map_or(None, |bytes| String::from_utf8(bytes).ok())
     }
-    fn patch(&mut self, key: &[u8], value: &str) {
+    fn patch(&mut self, key: K, value: &str) {
         if let Err(e) = self.db.put(key, value.as_bytes()) {
             dbg!(e);
         }
