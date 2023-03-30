@@ -1,7 +1,6 @@
 use super::Cache;
 use rocksdb::{DBWithThreadMode, SingleThreaded, ThreadMode, DB};
 use std::path::Path;
-use tracing::Value;
 
 pub struct RocksDbCache<T>
 where
@@ -17,17 +16,19 @@ impl RocksDbCache<SingleThreaded> {
     }
 }
 
-impl<T> Cache for RocksDbCache<T>
+impl<T> Cache<&[u8]> for RocksDbCache<T>
 where
     T: ThreadMode,
 {
-    fn get(&self, key: &str) -> Option<String> {
+    fn get(&self, key: &[u8]) -> Option<String> {
         self.db
-            .get(key.as_bytes())
+            .get(key)
             .unwrap_or(None)
             .map_or(None, |bytes| String::from_utf8(bytes).ok())
     }
-    fn patch(&mut self, key: &str, value: &str) {
-        self.db.put(key.as_bytes(), value.as_bytes());
+    fn patch(&mut self, key: &[u8], value: &str) {
+        if let Err(e) = self.db.put(key, value.as_bytes()) {
+            dbg!(e);
+        }
     }
 }
