@@ -7,18 +7,24 @@ use rocksdb::SingleThreaded;
 use crate::cache::{rocks::RocksDbCache, Cache};
 
 pub mod cache;
+pub mod cli;
 pub mod config;
 pub mod key;
+mod runner;
 
 lazy_static! {
     static ref CONFIG: config::CommacheConfig = config::get();
     static ref CACHE: RocksDbCache<SingleThreaded> = RocksDbCache::new(&CONFIG.db_dir);
 }
 
-pub fn run(args: &[&str]) {
+pub fn main(args: &[&str]) {
     let key = args.key();
     let v = CACHE.get(&key);
     dbg!(v);
+
+    if let Some((cmd, args)) = args.split_first() {
+        runner::run(cmd, args);
+    }
 }
 
 #[cfg(test)]

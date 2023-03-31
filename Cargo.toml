@@ -7,6 +7,8 @@ authors = ["Oli Dacombe <olidacombe@gmail.com>"]
 license = "MIT OR Apache-2.0"
 
 [dependencies]
+clap = { version = "4.2.1", features = ["derive"] }
+color-backtrace = "0.5.1"
 config = "0.13.3"
 derive_builder = "0.12.0"
 lazy_static = "1.4.0"
