@@ -18,7 +18,7 @@ impl RocksDbCache<SingleThreaded> {
 
 impl<K, T> Cache<K> for RocksDbCache<T>
 where
-    K: AsRef<[u8]>,
+    K: AsRef<[u8]> + Send,
     T: ThreadMode,
 {
     fn get(&self, key: K) -> Option<String> {
@@ -27,8 +27,8 @@ where
             .unwrap_or(None)
             .map_or(None, |bytes| String::from_utf8(bytes).ok())
     }
-    fn patch(&mut self, key: K, value: &str) {
-        if let Err(e) = self.db.put(key, value.as_bytes()) {
+    fn patch(&mut self, key: K, value: &[u8]) {
+        if let Err(e) = self.db.put(key, value) {
             dbg!(e);
         }
     }

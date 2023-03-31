@@ -10,6 +10,5 @@ fn main() {
     // dbg!(&arrgs);
 
     let args = cli::Args::parse();
-
-    commache::main(&args.get());
+    commache::main(args);
 }

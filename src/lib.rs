@@ -2,7 +2,6 @@
 
 use key::ToKey;
 use lazy_static::lazy_static;
-use rocksdb::SingleThreaded;
 
 use crate::cache::{rocks::RocksDbCache, Cache};
 
@@ -14,17 +13,16 @@ mod runner;
 
 lazy_static! {
     static ref CONFIG: config::CommacheConfig = config::get();
-    static ref CACHE: RocksDbCache<SingleThreaded> = RocksDbCache::new(&CONFIG.db_dir);
+    // static ref CACHE: RocksDbCache<SingleThreaded> = RocksDbCache::new(&CONFIG.db_dir);
 }
 
-pub fn main(args: &[&str]) {
-    let key = args.key();
-    let v = CACHE.get(&key);
+pub fn main(args: cli::Args) {
+    let cache = RocksDbCache::new(&CONFIG.db_dir);
+    let key = args.get().key();
+    let v = cache.get(&key);
     dbg!(v);
 
-    if let Some((cmd, args)) = args.split_first() {
-        runner::run(cmd, args);
-    }
+    runner::spawn(args, cache, key);
 }
 
 #[cfg(test)]

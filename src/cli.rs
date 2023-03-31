@@ -3,7 +3,7 @@ use clap::Parser;
 #[derive(Parser)] // requires `derive` feature
 #[command(author, version, about, long_about = None)]
 pub struct Args {
-    cmd: Vec<String>,
+    pub cmd: Vec<String>,
 }
 
 impl Args {

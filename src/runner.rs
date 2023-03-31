@@ -1,10 +1,29 @@
+use fork::{daemon, Fork};
 use std::process::Command;
 
-pub fn run(cmd: &str, args: &[&str]) {
-    println!("{:?} {:?}", cmd, args);
+use crate::{cache::Cache, cli};
+
+fn run(cmd: &str, args: &[&str]) -> Vec<u8> {
+    // println!("{:?} {:?}", cmd, args);
     let output = Command::new(cmd).args(args).output();
     //
     if let Ok(output) = output {
-        dbg!(output);
+        // dbg!(&output);
+        return output.stdout;
+    }
+    Vec::new()
+}
+
+pub fn spawn<K: Send + 'static>(
+    args: cli::Args,
+    mut cache: impl Cache<K> + Send + 'static,
+    key: K,
+) {
+    if let Ok(Fork::Child) = daemon(true, true) {
+        let args = args.get();
+        if let Some((cmd, args)) = args.split_first() {
+            let out = run(cmd, args);
+            cache.patch(key, &out);
+        }
     }
 }
