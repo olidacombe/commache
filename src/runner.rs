@@ -1,4 +1,4 @@
-use fork::{daemon, Fork};
+use fork::{fork, Fork};
 use std::process::Command;
 
 use crate::{cache::Cache, cli};
@@ -19,11 +19,20 @@ pub fn spawn<K: Send + 'static>(
     mut cache: impl Cache<K> + Send + 'static,
     key: K,
 ) {
-    if let Ok(Fork::Child) = daemon(true, true) {
-        let args = args.get();
-        if let Some((cmd, args)) = args.split_first() {
-            let out = run(cmd, args);
-            cache.patch(key, &out);
+    match fork() {
+        Ok(Fork::Parent(child)) => {
+            println!(
+                "Continuing execution in parent process, new child has pid: {}",
+                child
+            );
         }
+        Ok(Fork::Child) => {
+            let args = args.get();
+            if let Some((cmd, args)) = args.split_first() {
+                let out = run(cmd, args);
+                cache.patch(key, &out);
+            }
+        }
+        Err(_) => println!("Fork failed"),
     }
 }
