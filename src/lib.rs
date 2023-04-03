@@ -13,6 +13,7 @@ use key::ToKey;
 use lazy_static::lazy_static;
 
 use crate::cache::{rocks::RocksDbCache, Cache};
+use std::io::{stdout, Write};
 
 pub mod cache;
 pub mod cli;
@@ -29,8 +30,10 @@ pub fn main(args: cli::Args) {
     let key = args.get().key();
     let v = cache.get(&key);
     if let Some(v) = v {
-        println!("{}", v);
+        print!("{}", v);
     }
+
+    stdout().flush().unwrap();
 
     runner::spawn(args, cache, key);
 }

@@ -1,6 +1,5 @@
-use fork::{fork, Fork};
+use fork::{daemon, Fork};
 use std::process::Command;
-use tracing::{debug, error};
 
 use crate::{cache::Cache, cli};
 
@@ -18,20 +17,11 @@ pub fn spawn<K: Send + 'static>(
     mut cache: impl Cache<K> + Send + 'static,
     key: K,
 ) {
-    match fork() {
-        Ok(Fork::Parent(child)) => {
-            debug!(
-                "Continuing execution in parent process, new child has pid: {}",
-                child
-            );
+    if let Ok(Fork::Child) = daemon(true, false) {
+        let args = args.get();
+        if let Some((cmd, args)) = args.split_first() {
+            let out = run(cmd, args);
+            cache.patch(key, &out);
         }
-        Ok(Fork::Child) => {
-            let args = args.get();
-            if let Some((cmd, args)) = args.split_first() {
-                let out = run(cmd, args);
-                cache.patch(key, &out);
-            }
-        }
-        Err(_) => error!("Fork failed"),
     }
 }
