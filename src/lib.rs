@@ -13,14 +13,15 @@ mod runner;
 
 lazy_static! {
     static ref CONFIG: config::CommacheConfig = config::get();
-    // static ref CACHE: RocksDbCache<SingleThreaded> = RocksDbCache::new(&CONFIG.db_dir);
 }
 
 pub fn main(args: cli::Args) {
     let cache = RocksDbCache::new(&CONFIG.db_dir);
     let key = args.get().key();
     let v = cache.get(&key);
-    dbg!(v);
+    if let Some(v) = v {
+        println!("{}", v);
+    }
 
     runner::spawn(args, cache, key);
 }

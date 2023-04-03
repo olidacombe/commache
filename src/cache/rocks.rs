@@ -1,6 +1,7 @@
 use super::Cache;
 use rocksdb::{DBWithThreadMode, SingleThreaded, ThreadMode, DB};
 use std::path::Path;
+use tracing::debug;
 
 pub struct RocksDbCache<T>
 where
@@ -29,7 +30,7 @@ where
     }
     fn patch(&mut self, key: K, value: &[u8]) {
         if let Err(e) = self.db.put(key, value) {
-            dbg!(e);
+            debug!("{:?}", e);
         }
     }
 }

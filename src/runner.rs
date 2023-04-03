@@ -1,14 +1,13 @@
 use fork::{fork, Fork};
 use std::process::Command;
+use tracing::{debug, error};
 
 use crate::{cache::Cache, cli};
 
 fn run(cmd: &str, args: &[&str]) -> Vec<u8> {
-    // println!("{:?} {:?}", cmd, args);
     let output = Command::new(cmd).args(args).output();
-    //
+
     if let Ok(output) = output {
-        // dbg!(&output);
         return output.stdout;
     }
     Vec::new()
@@ -21,7 +20,7 @@ pub fn spawn<K: Send + 'static>(
 ) {
     match fork() {
         Ok(Fork::Parent(child)) => {
-            println!(
+            debug!(
                 "Continuing execution in parent process, new child has pid: {}",
                 child
             );
@@ -33,6 +32,6 @@ pub fn spawn<K: Send + 'static>(
                 cache.patch(key, &out);
             }
         }
-        Err(_) => println!("Fork failed"),
+        Err(_) => error!("Fork failed"),
     }
 }
