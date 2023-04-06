@@ -4,6 +4,7 @@ use crate::{cache::Cache, cli::Args};
 use fork::{daemon, Fork};
 use ipc_channel::ipc::{IpcOneShotServer, IpcSender};
 use serde::Serialize;
+use tracing::error;
 
 pub fn queue<R: Runner>(runner: R) {
     let (args, cache) = runner.mv();
@@ -38,12 +39,25 @@ fn spawn_server(mut cache: impl Cache<Vec<u8>>) {
     let (server, sock) = IpcOneShotServer::<Args>::new().unwrap();
     CONFIG.write_sock(&sock);
     if let Ok(Fork::Child) = daemon(true, false) {
-        if let Ok((rx, mut args)) = server.accept() {
-            loop {
+        match server.accept() {
+            Ok((rx, mut args)) => loop {
                 let runner = RunnerImpl::new(args, cache);
                 (_, cache) = runner.run_and_cache();
-                // TODO try harder
-                args = rx.recv().unwrap();
+
+                loop {
+                    match rx.recv() {
+                        Ok(r) => {
+                            args = r;
+                            break;
+                        }
+                        Err(e) => {
+                            error!("error recieving args: {:?}", e);
+                        }
+                    }
+                }
+            },
+            Err(e) => {
+                error!("error setting up args receiver: {:?}", e);
             }
         }
     }
