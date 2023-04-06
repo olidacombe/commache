@@ -32,11 +32,15 @@ pub fn main(args: cli::Args) {
     let v = cache.get(&key);
     if let Some(v) = v {
         print!("{}", v);
+    } else {
+        let v = runner::run_and_cache(args, cache, key);
+        let v = String::from_utf8(v).ok().unwrap_or_else(String::new);
+        print!("{}", v);
     }
 
     stdout().flush().unwrap();
 
-    runner::spawn(args, cache, key);
+    // runner::spawn(args, cache, key);
 }
 
 #[cfg(test)]
