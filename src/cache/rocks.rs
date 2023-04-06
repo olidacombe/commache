@@ -22,13 +22,13 @@ where
     K: AsRef<[u8]> + Send,
     T: ThreadMode,
 {
-    fn get(&self, key: K) -> Option<String> {
+    fn get(&self, key: &K) -> Option<String> {
         self.db
             .get(key)
             .unwrap_or(None)
             .map_or(None, |bytes| String::from_utf8(bytes).ok())
     }
-    fn patch(&mut self, key: K, value: &[u8]) {
+    fn patch(&mut self, key: &K, value: &[u8]) {
         if let Err(e) = self.db.put(key, value) {
             debug!("{:?}", e);
         }
