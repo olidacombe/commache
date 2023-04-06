@@ -1,10 +1,14 @@
+use crate::runner::Runner;
 use crate::CONFIG;
 use crate::{cache::Cache, cli::Args};
 use fork::{daemon, Fork};
 use ipc_channel::ipc::{IpcOneShotServer, IpcSender};
 use serde::Serialize;
 
-pub fn queue<K: Send + 'static>(args: Args, mut cache: impl Cache<K>, key: K) {}
+pub fn queue<R: Runner>(runner: R) {
+    let sender = get_sender();
+    sender.send(runner.args());
+}
 
 /// TODO:Attempt to connect a sender to an existing server,
 /// fork a server if this fails
@@ -32,9 +36,10 @@ where
 }
 
 fn spawn_server() {
-    let (server, sock) = IpcOneShotServer::<Args>::new().unwrap();
-    CONFIG.write_sock(&sock);
     if let Ok(Fork::Child) = daemon(true, false) {
+        let (server, sock) = IpcOneShotServer::<Args>::new().unwrap();
+        CONFIG.write_sock(&sock);
         // TODO
+        std::thread::sleep(std::time::Duration::from_secs(600));
     }
 }

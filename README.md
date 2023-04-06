@@ -7,7 +7,7 @@ leaves orphan/zombie processes behing on every invokation.
 
 ### TODO
 
-Transition to a daemon implementation, where the clien
+Transition to a daemon implementation, where the client
 queries the daemon, and the daemon is responsible for the
 lazy after-return fetching.
 

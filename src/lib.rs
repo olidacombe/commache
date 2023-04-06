@@ -5,12 +5,12 @@
 //!
 //! ## TODO
 //!
-//! Transition to a daemon implementation, where the clien
+//! Transition to a daemon implementation, where the client
 //! queries the daemon, and the daemon is responsible for the
 //! lazy after-return fetching.
 
 use lazy_static::lazy_static;
-use runner::Runner;
+use runner::{Runner, RunnerImpl};
 
 use crate::cache::rocks::RocksDbCache;
 use std::{
@@ -36,8 +36,8 @@ fn print_now<T: Display>(printme: T) {
 
 pub fn main(args: cli::Args) {
     let cache = RocksDbCache::new(&CONFIG.db_dir);
-    let runner = Runner::new(args, cache);
-    print_now(runner.get());
+    let runner = RunnerImpl::new(args, cache);
+    runner.get(print_now);
 }
 
 #[cfg(test)]
