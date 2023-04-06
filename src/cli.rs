@@ -1,9 +1,10 @@
 use clap::Parser;
+use serde::{Deserialize, Serialize};
 
-#[derive(Parser)] // requires `derive` feature
+#[derive(Parser, Deserialize, Serialize)] // requires `derive` feature
 #[command(author, version, about, long_about = None)]
 pub struct Args {
-    pub cmd: Vec<String>,
+    cmd: Vec<String>,
 }
 
 impl Args {

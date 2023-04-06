@@ -20,9 +20,10 @@ pub mod cli;
 pub mod config;
 pub mod key;
 mod runner;
+pub mod server;
 
 lazy_static! {
-    static ref CONFIG: config::CommacheConfig = config::get();
+    pub static ref CONFIG: config::CommacheConfig = config::get();
 }
 
 pub fn main(args: cli::Args) {

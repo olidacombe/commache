@@ -18,11 +18,16 @@ lazy_static! {
 pub struct CommacheConfig {
     #[builder(default = "Self::default_db_dir()")]
     pub db_dir: PathBuf,
+    #[builder(default = "Self::default_sock_path_file()")]
+    pub sock_path_file: PathBuf,
 }
 
 impl CommacheConfigBuilder {
     fn default_db_dir() -> PathBuf {
         APP_DIR.join("db")
+    }
+    fn default_sock_path_file() -> PathBuf {
+        APP_DIR.join("sock.path")
     }
 }
 
@@ -37,4 +42,13 @@ pub fn get() -> CommacheConfig {
 
     let config_builder: CommacheConfigBuilder = config.try_deserialize().unwrap();
     config_builder.build().unwrap()
+}
+
+impl CommacheConfig {
+    pub fn sock_path(&self) -> Option<String> {
+        std::fs::read_to_string(&self.sock_path_file).ok()
+    }
+    pub fn write_sock(&self, sock: &str) {
+        std::fs::write(&self.sock_path_file, sock).expect("Unable to write sock path");
+    }
 }
