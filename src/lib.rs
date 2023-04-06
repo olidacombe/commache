@@ -13,7 +13,10 @@ use key::ToKey;
 use lazy_static::lazy_static;
 
 use crate::cache::{rocks::RocksDbCache, Cache};
-use std::io::{stdout, Write};
+use std::{
+    fmt::Display,
+    io::{stdout, Write},
+};
 
 pub mod cache;
 pub mod cli;
@@ -26,21 +29,25 @@ lazy_static! {
     pub static ref CONFIG: config::CommacheConfig = config::get();
 }
 
+fn print_now<T: Display>(printme: T) {
+    print!("{}", printme);
+    stdout().flush().unwrap();
+}
+
 pub fn main(args: cli::Args) {
     let cache = RocksDbCache::new(&CONFIG.db_dir);
     let key = args.get().key();
     let v = cache.get(&key);
     if let Some(v) = v {
-        print!("{}", v);
+        // print out what we already have cached
+        print_now(v);
+        // refresh cache in the background
+        server::queue(args, cache, key);
     } else {
         let v = runner::run_and_cache(args, cache, key);
         let v = String::from_utf8(v).ok().unwrap_or_else(String::new);
-        print!("{}", v);
+        print_now(v);
     }
-
-    stdout().flush().unwrap();
-
-    // runner::spawn(args, cache, key);
 }
 
 #[cfg(test)]

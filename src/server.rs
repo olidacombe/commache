@@ -1,15 +1,10 @@
-use crate::cli::Args;
 use crate::CONFIG;
+use crate::{cache::Cache, cli::Args};
 use fork::{daemon, Fork};
 use ipc_channel::ipc::{IpcOneShotServer, IpcSender};
 use serde::Serialize;
 
-pub fn queue(args: Args) {
-    let (server, name) = IpcOneShotServer::<Args>::new().unwrap();
-
-    let tx = IpcSender::connect(name).unwrap();
-    tx.send(args).unwrap();
-}
+pub fn queue<K: Send + 'static>(args: Args, mut cache: impl Cache<K>, key: K) {}
 
 /// TODO:Attempt to connect a sender to an existing server,
 /// fork a server if this fails
