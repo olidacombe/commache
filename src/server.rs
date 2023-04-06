@@ -1,4 +1,4 @@
-use crate::runner::Runner;
+use crate::runner::{Runner, RunnerImpl};
 use crate::CONFIG;
 use crate::{cache::Cache, cli::Args};
 use fork::{daemon, Fork};
@@ -6,13 +6,12 @@ use ipc_channel::ipc::{IpcOneShotServer, IpcSender};
 use serde::Serialize;
 
 pub fn queue<R: Runner>(runner: R) {
-    let sender = get_sender();
-    sender.send(runner.args());
+    let (args, cache) = runner.mv();
+    let sender = get_sender(cache);
+    sender.send(args).expect("Error queuing refresh");
 }
 
-/// TODO:Attempt to connect a sender to an existing server,
-/// fork a server if this fails
-fn get_sender<T>() -> IpcSender<T>
+fn get_sender<T>(cache: impl Cache<Vec<u8>>) -> IpcSender<T>
 where
     T: Serialize,
 {
@@ -20,7 +19,7 @@ where
         return sender;
     }
 
-    spawn_server();
+    spawn_server(cache);
 
     try_attach_sender().unwrap()
 }
@@ -35,11 +34,17 @@ where
     }
 }
 
-fn spawn_server() {
+fn spawn_server(mut cache: impl Cache<Vec<u8>>) {
+    let (server, sock) = IpcOneShotServer::<Args>::new().unwrap();
+    CONFIG.write_sock(&sock);
     if let Ok(Fork::Child) = daemon(true, false) {
-        let (server, sock) = IpcOneShotServer::<Args>::new().unwrap();
-        CONFIG.write_sock(&sock);
-        // TODO
-        std::thread::sleep(std::time::Duration::from_secs(600));
+        if let Ok((rx, mut args)) = server.accept() {
+            loop {
+                let runner = RunnerImpl::new(args, cache);
+                (_, cache) = runner.run_and_cache();
+                // TODO try harder
+                args = rx.recv().unwrap();
+            }
+        }
     }
 }
