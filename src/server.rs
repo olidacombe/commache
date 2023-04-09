@@ -19,8 +19,13 @@ fn get_sender<T>(cache: impl Cache<Vec<u8>>) -> IpcSender<T>
 where
     T: Serialize,
 {
-    if let Ok(sender) = try_attach_sender() {
-        return sender;
+    match try_attach_sender() {
+        Ok(sender) => {
+            return sender;
+        }
+        Err(e) => {
+            error!("first attach attempt: {:?}", e);
+        }
     }
 
     spawn_server(cache);
@@ -42,14 +47,26 @@ where
     T: Serialize,
 {
     match CONFIG.sock_path() {
-        Some(sock) => IpcSender::connect(sock),
+        Some(sock) => {
+            debug!("attempting to attach {:?}", &sock);
+            IpcSender::connect(sock)
+        }
         None => Err(std::io::Error::from(std::io::ErrorKind::NotFound)),
     }
 }
 
 fn spawn_server(mut cache: impl Cache<Vec<u8>>) {
-    let (server, sock) = IpcOneShotServer::<Args>::new().unwrap();
+    debug!("spawn_server");
+    let (server, sock) = match IpcOneShotServer::<Args>::new() {
+        Ok((server, sock)) => (server, sock),
+        Err(e) => {
+            error!("failed to start ipc endpoint: {:?}", e);
+            panic!("failed to start ipc endpoint: {:?}", e);
+        }
+    };
     CONFIG.write_sock(&sock);
+    // after we've written to the sock info file, we're happy to fork and let parent
+    // return, so that second attempt to connect can be made
     if let Ok(Fork::Child) = daemon(true, false) {
         debug!("Entered daemon process");
         match server.accept() {

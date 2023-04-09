@@ -3,6 +3,7 @@ use derive_builder::Builder;
 use lazy_static::lazy_static;
 use std::env;
 use std::path::PathBuf;
+use tracing::{debug, error};
 
 lazy_static! {
     static ref APP_DIR: PathBuf = {
@@ -46,9 +47,15 @@ pub fn get() -> CommacheConfig {
 
 impl CommacheConfig {
     pub fn sock_path(&self) -> Option<String> {
+        debug!("reading sock path from {:?}", &self.sock_path_file);
         std::fs::read_to_string(&self.sock_path_file).ok()
     }
     pub fn write_sock(&self, sock: &str) {
-        std::fs::write(&self.sock_path_file, sock).expect("Unable to write sock path");
+        if let Err(e) = std::fs::write(&self.sock_path_file, sock) {
+            error!(
+                "failed to write sock info: {:?} > {:?} :: {:?}",
+                sock, &self.sock_path_file, e
+            );
+        }
     }
 }

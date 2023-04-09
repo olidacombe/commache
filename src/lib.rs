@@ -11,7 +11,6 @@
 
 use lazy_static::lazy_static;
 use runner::{Runner, RunnerImpl};
-use tracing::error;
 
 use crate::cache::rocks::RocksDbCache;
 use std::{
