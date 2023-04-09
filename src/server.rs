@@ -34,11 +34,17 @@ where
         Err(e) => {
             error!(
                 "failed to attach to existing daemon after spawn call: {:?}",
+                &e
+            );
+            panic!(
+                "failed to attach to existing daemon after spawn call: {:?}",
                 e
             );
-            panic!();
         }
-        Ok(sender) => sender,
+        Ok(sender) => {
+            debug!("attached");
+            sender
+        }
     }
 }
 
@@ -65,9 +71,10 @@ fn spawn_server(mut cache: impl Cache<Vec<u8>>) {
         }
     };
     CONFIG.write_sock(&sock);
+    debug!("ABOUT TO FORK");
     // after we've written to the sock info file, we're happy to fork and let parent
     // return, so that second attempt to connect can be made
-    if let Ok(Fork::Child) = daemon(true, false) {
+    if let Ok(Fork::Child) = daemon(true, true) {
         debug!("Entered daemon process");
         match server.accept() {
             Ok((rx, mut args)) => loop {
@@ -91,4 +98,6 @@ fn spawn_server(mut cache: impl Cache<Vec<u8>>) {
             }
         }
     }
+
+    debug!("END spawn_server");
 }
