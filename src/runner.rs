@@ -1,5 +1,7 @@
 use std::process::Command;
 
+use tracing::debug;
+
 use crate::{cache::Cache, cli::Args, key::ToKey, server};
 
 pub trait Runner {
@@ -39,10 +41,12 @@ where
     fn get<F: Fn(String)>(self, cb: F) {
         let v = self.cache.get(&self.key);
         if let Some(v) = v {
+            debug!("cache hit");
             cb(v);
             // refresh cache in the background
             server::queue(self);
         } else {
+            debug!("cache miss");
             let (v, _) = self.run_and_cache();
             let v = String::from_utf8(v).ok().unwrap_or_else(String::new);
             cb(v);

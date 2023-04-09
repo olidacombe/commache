@@ -4,12 +4,15 @@ use crate::{cache::Cache, cli::Args};
 use fork::{daemon, Fork};
 use ipc_channel::ipc::{IpcOneShotServer, IpcSender};
 use serde::Serialize;
-use tracing::error;
+use tracing::{debug, error};
 
 pub fn queue<R: Runner>(runner: R) {
     let (args, cache) = runner.mv();
+    debug!("queue {:?}", &args);
     let sender = get_sender(cache);
-    sender.send(args).expect("Error queuing refresh");
+    if let Err(e) = sender.send(args) {
+        error!("failure sending job to daemon: {:?}", e);
+    }
 }
 
 fn get_sender<T>(cache: impl Cache<Vec<u8>>) -> IpcSender<T>
@@ -22,7 +25,16 @@ where
 
     spawn_server(cache);
 
-    try_attach_sender().unwrap()
+    match try_attach_sender() {
+        Err(e) => {
+            error!(
+                "failed to attach to existing daemon after spawn call: {:?}",
+                e
+            );
+            panic!();
+        }
+        Ok(sender) => sender,
+    }
 }
 
 fn try_attach_sender<T>() -> Result<IpcSender<T>, std::io::Error>
@@ -39,6 +51,7 @@ fn spawn_server(mut cache: impl Cache<Vec<u8>>) {
     let (server, sock) = IpcOneShotServer::<Args>::new().unwrap();
     CONFIG.write_sock(&sock);
     if let Ok(Fork::Child) = daemon(true, false) {
+        debug!("Entered daemon process");
         match server.accept() {
             Ok((rx, mut args)) => loop {
                 let runner = RunnerImpl::new(args, cache);
