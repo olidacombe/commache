@@ -56,6 +56,8 @@ impl CommacheConfig {
                 "failed to write sock info: {:?} > {:?} :: {:?}",
                 sock, &self.sock_path_file, e
             );
+        } else {
+            debug!("wrote sock info: {:?} > {:?}", sock, &self.sock_path_file);
         }
     }
 }

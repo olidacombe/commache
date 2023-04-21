@@ -30,21 +30,24 @@ where
 
     spawn_server(cache);
 
-    match try_attach_sender() {
-        Err(e) => {
-            error!(
-                "failed to attach to existing daemon after spawn call: {:?}",
-                &e
-            );
-            panic!(
-                "failed to attach to existing daemon after spawn call: {:?}",
-                e
-            );
+    loop {
+        match try_attach_sender() {
+            Err(e) => {
+                error!(
+                    "failed to attach to existing daemon after spawn call: {:?}",
+                    &e
+                );
+                // panic!(
+                //     "failed to attach to existing daemon after spawn call: {:?}",
+                //     e
+                // );
+            }
+            Ok(sender) => {
+                debug!("attached");
+                return sender;
+            }
         }
-        Ok(sender) => {
-            debug!("attached");
-            sender
-        }
+        std::thread::sleep(std::time::Duration::from_secs(1));
     }
 }
 
@@ -71,9 +74,10 @@ fn spawn_server(mut cache: impl Cache<Vec<u8>>) {
         }
     };
     CONFIG.write_sock(&sock);
-    debug!("ABOUT TO FORK");
+    debug!("ABOUT TO DAEMONIZE");
     // after we've written to the sock info file, we're happy to fork and let parent
     // return, so that second attempt to connect can be made
+
     if let Ok(Fork::Child) = daemon(true, true) {
         debug!("Entered daemon process");
         match server.accept() {
