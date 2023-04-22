@@ -19,16 +19,32 @@ lazy_static! {
 pub struct CommacheConfig {
     #[builder(default = "Self::default_db_dir()")]
     pub db_dir: PathBuf,
-    #[builder(default = "Self::default_sock_path_file()")]
-    pub sock_path_file: PathBuf,
+    #[builder(default = "Self::default_pid_file()")]
+    pub pid_file: PathBuf,
+    #[builder(default = "Self::default_sock_path()")]
+    pub sock_path: PathBuf,
+}
+
+macro_rules! local_file {
+    ($suffix:expr) => {
+        APP_DIR.join(format!(
+            "{}{}",
+            &std::env!("CARGO_PKG_NAME").to_lowercase(),
+            $suffix
+        ))
+    };
 }
 
 impl CommacheConfigBuilder {
     fn default_db_dir() -> PathBuf {
-        APP_DIR.join("db")
+        local_file!(".db")
     }
-    fn default_sock_path_file() -> PathBuf {
-        APP_DIR.join("sock.path")
+
+    fn default_pid_file() -> PathBuf {
+        local_file!(".pid")
+    }
+    fn default_sock_path() -> PathBuf {
+        local_file!(".sock")
     }
 }
 
@@ -43,21 +59,4 @@ pub fn get() -> CommacheConfig {
 
     let config_builder: CommacheConfigBuilder = config.try_deserialize().unwrap();
     config_builder.build().unwrap()
-}
-
-impl CommacheConfig {
-    pub fn sock_path(&self) -> Option<String> {
-        debug!("reading sock path from {:?}", &self.sock_path_file);
-        std::fs::read_to_string(&self.sock_path_file).ok()
-    }
-    pub fn write_sock(&self, sock: &str) {
-        if let Err(e) = std::fs::write(&self.sock_path_file, sock) {
-            error!(
-                "failed to write sock info: {:?} > {:?} :: {:?}",
-                sock, &self.sock_path_file, e
-            );
-        } else {
-            debug!("wrote sock info: {:?} > {:?}", sock, &self.sock_path_file);
-        }
-    }
 }

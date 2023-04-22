@@ -9,18 +9,21 @@ homepage = "https://github.com/olidacombe/commache"
 repository = "https://github.com/olidacombe/commache"
 
 [dependencies]
+bincode = "1.3.3"
 clap = { version = "4.2.1", features = ["derive"] }
 color-backtrace = "0.5.1"
 config = "0.13.3"
+daemonizr = "0.1.5"
 derive_builder = "0.12.0"
-fork = "0.1.21"
-ipc-channel = "0.16.0"
 lazy_static = "1.4.0"
 rocksdb = "0.20.1"
 serde = { version = "1.0.158", features = ["derive"] }
+thiserror = "1.0.40"
+tokio = "1.27.0"
 tracing = { version = "0.1.34", features = ["log"] }
 tracing-appender = "0.2.2"
 tracing-subscriber = { version = "0.3.16", features = ["env-filter"] }
+zeromq = "0.3.3"
 
 [dev-dependencies.cargo-husky]
 version = "1"
