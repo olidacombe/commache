@@ -21,6 +21,7 @@ use std::{
 pub mod cache;
 pub mod cli;
 pub mod config;
+pub mod error;
 pub mod key;
 mod runner;
 pub mod server;

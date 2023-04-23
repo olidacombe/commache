@@ -39,7 +39,6 @@ impl CommacheConfigBuilder {
     fn default_db_dir() -> PathBuf {
         local_file!(".db")
     }
-
     fn default_pid_file() -> PathBuf {
         local_file!(".pid")
     }
