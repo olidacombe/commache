@@ -4,7 +4,8 @@ use commache::config;
 use tracing::debug;
 use tracing_subscriber::{fmt, prelude::*, EnvFilter};
 
-fn main() {
+#[tokio::main]
+async fn main() {
     // set up some sort of logability while I figure things out
     // TODO tidy away somewhere
     color_backtrace::install();

@@ -3,7 +3,6 @@ use derive_builder::Builder;
 use lazy_static::lazy_static;
 use std::env;
 use std::path::PathBuf;
-use tracing::{debug, error};
 
 lazy_static! {
     static ref APP_DIR: PathBuf = {
@@ -23,6 +22,12 @@ pub struct CommacheConfig {
     pub pid_file: PathBuf,
     #[builder(default = "Self::default_sock_path()")]
     pub sock_path: PathBuf,
+}
+
+impl CommacheConfig {
+    pub fn sock_uri(&self) -> String {
+        format!("ipc://{}", &self.sock_path.display())
+    }
 }
 
 macro_rules! local_file {

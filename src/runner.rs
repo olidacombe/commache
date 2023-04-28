@@ -1,12 +1,16 @@
-use std::process::Command;
+use crate::error::ZmqBinSerdeError;
+use std::{error::Error, process::Command};
 
 use tracing::debug;
+use zeromq::ZmqMessage;
 
 use crate::{cache::Cache, cli::Args, key::ToKey, server};
 
 pub trait Runner {
     type Cache: Cache<Vec<u8>>;
+    type Error;
 
+    fn try_msg(&self) -> Result<ZmqMessage, Self::Error>;
     fn mv(self) -> (Args, Self::Cache);
     fn new(args: Args, cache: Self::Cache) -> Self;
     fn get<F: Fn(String)>(self, cb: F);
@@ -28,6 +32,11 @@ where
     C: Cache<Vec<u8>>,
 {
     type Cache = C;
+    type Error = ZmqBinSerdeError;
+
+    fn try_msg(&self) -> Result<ZmqMessage, Self::Error> {
+        (&self.args).try_into()
+    }
 
     fn mv(self) -> (Args, Self::Cache) {
         (self.args, self.cache)

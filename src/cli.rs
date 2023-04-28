@@ -3,7 +3,7 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use zeromq::{ZmqError, ZmqMessage};
 
-#[derive(Debug, Parser, Deserialize, Serialize)] // requires `derive` feature
+#[derive(Debug, Parser, Deserialize, Serialize)]
 #[command(author, version, about, long_about = None)]
 pub struct Args {
     cmd: Vec<String>,
@@ -24,11 +24,11 @@ impl TryFrom<ZmqMessage> for Args {
     }
 }
 
-impl TryFrom<Args> for ZmqMessage {
+impl TryFrom<&Args> for ZmqMessage {
     type Error = ZmqBinSerdeError;
 
-    fn try_from(args: Args) -> Result<Self, Self::Error> {
-        let b = bincode::serialize(&args)?;
+    fn try_from(args: &Args) -> Result<Self, Self::Error> {
+        let b = bincode::serialize(args)?;
         Ok(ZmqMessage::from(b))
     }
 }
