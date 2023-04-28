@@ -1,7 +1,8 @@
 use crate::error::ZmqBinSerdeError;
-use std::{error::Error, process::Command};
+use futures::executor::block_on;
+use std::process::Command;
 
-use tracing::debug;
+use tracing::{debug, error};
 use zeromq::ZmqMessage;
 
 use crate::{cache::Cache, cli::Args, key::ToKey, server};
@@ -53,7 +54,9 @@ where
             debug!("cache hit");
             cb(v);
             // refresh cache in the background
-            server::queue(self);
+            if let Err(e) = block_on(server::queue(self)) {
+                error!("{:?}", e);
+            }
         } else {
             debug!("cache miss");
             let (v, _) = self.run_and_cache();
