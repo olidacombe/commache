@@ -24,7 +24,6 @@ pub mod config;
 pub mod error;
 pub mod key;
 mod runner;
-pub mod server;
 
 lazy_static! {
     pub static ref CONFIG: config::CommacheConfig = config::get();
