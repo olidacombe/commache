@@ -13,7 +13,7 @@ pub async fn queue<R: Runner>(runner: R) -> Result<(), R::Error> {
 
     {
         let mut socket = PubSocket::new();
-        debug!("connecting publisher");
+        debug!("connecting publisher to {}", &CONFIG.sock_uri());
         if let Ok(_) = socket.connect(&CONFIG.sock_uri()).await {
             debug!("sending");
             match socket.send(runner.try_msg()?).await {
@@ -21,6 +21,7 @@ pub async fn queue<R: Runner>(runner: R) -> Result<(), R::Error> {
                 Err(e) => error!("{:?}", e),
             }
         }
+        debug!("end publish attempt");
     }
 
     if let Err(e) = spawn_daemon(runner).await {
@@ -38,7 +39,9 @@ async fn spawn_daemon<R: Runner>(initial_runner: R) -> Result<(), ServerError> {
         .pidfile(PathBuf::from("dmnzr.pid"))
         .stdout(Stdout::Redirect(PathBuf::from("dmnzr.out")))
         .stderr(Stderr::Redirect(PathBuf::from("dmnzr.err")))
-        .umask(0o027)?
+        .umask(0o022)?
+        // TODO
+        // .umask(0o077)?
         .spawn()?;
 
     println!("DAEMONIZED");
@@ -57,16 +60,20 @@ async fn spawn_daemon<R: Runner>(initial_runner: R) -> Result<(), ServerError> {
     println!("subscribed");
 
     loop {
-        let recv = socket.recv().await?;
-        let r = recv.get(0);
-        if r.is_none() {
-            continue;
-        }
-        if let Ok(args) = bincode::deserialize::<Args>(r.unwrap()) {
-            dbg!(&args);
-            let runner = R::new(args, cache);
-            (_, cache) = runner.run_and_cache();
-        }
+        println!("waiting for input");
+        // let recv = socket.recv().await?;
+        // println!("incoming");
+        // let r = recv.get(0);
+        // if r.is_none() {
+        //     continue;
+        // }
+        // println!("attempting to deserialize");
+        // if let Ok(args) = bincode::deserialize::<Args>(r.unwrap()) {
+        //     dbg!(&args);
+        //     let runner = R::new(args, cache);
+        //     (_, cache) = runner.run_and_cache();
+        // }
+        std::thread::sleep(std::time::Duration::from_millis(10_000));
     }
 }
 
